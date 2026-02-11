@@ -1,0 +1,8 @@
+<form method="POST" action="/vehicles/edit/<%= vehicle.id %>" class="bg-white p-6 rounded shadow-lg">
+  <h2 class="text-xl font-bold mb-4">Editar Veículo</h2>
+  <label>Entrada:</label>
+  <input type="datetime-local" name="entry_time" value="<%= vehicle.entry_time ? vehicle.entry_time.toISOString().slice(0,16) : '' %>" class="p-2 border rounded mb-4">
+  <label>Saída:</label>
+  <input type="datetime-local" name="exit_time" value="<%= vehicle.exit_time ? vehicle.exit_time.toISOString().slice(0,16) : '' %>" class="p-2 border rounded mb-4">
+  <button type="submit" class="bg-green-700 text-white px-4 py-2 rounded">Salvar</button>
+</form>

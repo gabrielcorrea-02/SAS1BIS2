@@ -1,0 +1,326 @@
+<%- include('partials/head', { title: 'Visitantes - 1°BIS(AMV)' })%>
+<body class="bg-gray-100 text-gray-800 font-sans">
+
+  <!-- Header -->
+  <%- include('partials/header') %>
+
+<div class="flex min-height-screen">
+  <!-- Sidebar -->
+  <%- include('partials/sidebar') %>
+
+  <!-- Main content -->
+  <main class="flex-1 p-6">
+
+    <!-- NOVO VISITANTE -->
+    <section class="bg-white shadow-lg rounded-xl p-6 mb-8">
+      <h2 class="text-xl font-bold mb-4">Novo Visitante</h2>
+
+      <form id="addGuestForm" class="grid gap-4 md:grid-cols-2">
+
+        <!-- Dados básicos -->
+        <input type="text" name="nome_completo" placeholder="Nome Completo" required class="p-3 border rounded-lg md:col-span-2">
+        <input type="text" name="nome_de_guerra" placeholder="Nome de Guerra (opcional)" class="p-3 border rounded-lg md:col-span-2">
+        <textarea name="objetivo" placeholder="Objetivo da visita" class="p-3 border rounded-lg md:col-span-2"></textarea>
+
+        <!-- Tipo de visitante -->
+        <div class="md:col-span-2">
+          <label class="block font-semibold mb-1">Tipo de Visitante</label>
+          <select id="tipoVisitante" name="tipo_visitanteFK" class="p-3 border rounded-lg w-full">
+            <option value="">Nenhum</option>
+            <option value="empresa_permanente">Empresa Permanente</option>
+            <option value="empresa_esporadica">Empresa Esporádica</option>
+            <option value="organizacao_militar">Organização Militar</option>
+          </select>
+        </div>
+
+        <!-- Empresa Permanente -->
+        <div id="empresaPermanenteFields" class="hidden md:col-span-2 p-4 border rounded-lg bg-gray-50">
+          <h3 class="font-semibold mb-2">Empresa Permanente</h3>
+          <input type="text" name="empresa_permanente_nome" placeholder="Nome da Empresa" class="p-3 border rounded-lg w-full mb-2">
+        </div>
+
+        <!-- Empresa Esporádica -->
+        <div id="empresaEsporadicaFields" class="hidden md:col-span-2 p-4 border rounded-lg bg-gray-50">
+          <h3 class="font-semibold mb-2">Empresa Esporádica</h3>
+          <input type="text" name="empresa_esporadica_nome" placeholder="Nome da Empresa" class="p-3 border rounded-lg w-full mb-2">
+          <input type="text" name="empresa_esporadica_setor" placeholder="Setor" class="p-3 border rounded-lg w-full">
+        </div>
+
+        <!-- ORGANIZAÇÃO MILITAR -->
+        <div id="omFields" class="hidden md:col-span-2 p-4 border rounded-lg bg-gray-50">
+
+          <label class="block mb-1 font-semibold">Organização Militar</label>
+          <select id="omSelect" name="om_nome" class="p-3 border rounded-lg w-full">
+            <option value="">Selecione...</option>
+
+            <% if (amazonasOMList && amazonasOMList.length > 0) { %>
+              <% amazonasOMList.forEach(om => { %>
+                <option value="<%= om.value %>"><%= om.label %></option>
+              <% }) %>
+            <% } else { %>
+              <option disabled>Nenhuma OM carregada (amazonasOMList vazio)</option>
+            <% } %>
+          </select>
+          <!-- Campo para digitar OM manualmente -->
+          <div id="omOutroInput" class="hidden mt-3">
+            <label class="block mb-1 font-semibold">Digite manualmente a OM</label>
+            <input 
+              type="text" 
+              name="om_outro_manual"
+              placeholder="Ex: CDS"
+              class="p-3 border rounded-lg w-full"
+            >
+          </div>
+
+          <label class="block mt-3 mb-1 font-semibold">Guarnição</label>
+          <input 
+            id="omGuarnicao"
+            type="text" 
+            name="om_guarnicao" 
+            placeholder="Guarnição (ex: Manaus/AM)" 
+            class="p-3 border rounded-lg w-full"
+          >
+        </div>
+
+        <!-- Crachá -->
+        <div class="md:col-span-2 p-4 border rounded-lg bg-gray-50">
+          <h3 class="font-semibold mb-2">Crachá (opcional)</h3>
+          <input type="number" name="cracha" placeholder="Número" class="p-3 border rounded-lg w-full md:w-1/3">
+        </div>
+
+        <!-- Veículo -->
+        <div class="md:col-span-2 p-4 border rounded-lg bg-gray-50">
+          <h3 class="font-semibold mb-2">Veículo (opcional)</h3>
+          <div class="grid md:grid-cols-5 gap-4">
+            <input type="text" name="placa" placeholder="Placa" class="p-3 border rounded-lg">
+            <input type="text" name="marca" placeholder="Marca" class="p-3 border rounded-lg">
+            <input type="text" name="modelo" placeholder="Modelo" class="p-3 border rounded-lg">
+            <input type="text" name="cor" placeholder="Cor" class="p-3 border rounded-lg">
+            <input type="text" name="tipo" placeholder="Tipo (carro/moto/etc)" class="p-3 border rounded-lg">
+          </div>
+        </div>
+
+        <button type="submit" class="bg-green-700 text-white py-3 rounded-lg md:col-span-2 hover:bg-green-800 transition">
+          Registrar Visitante
+        </button>
+      </form>
+    </section>
+
+
+
+    <!-- LISTA DE VISITANTES -->
+    <section class="bg-white shadow-lg rounded-xl p-6">
+      <h2 class="text-xl font-bold mb-4">Visitantes Registrados</h2>
+
+      <!-- Busca -->
+      <div class="flex items-center gap-2 mb-4">
+        <input type="text" id="searchInput" placeholder="Buscar visitante..." class="p-3 border rounded-lg w-full">
+        <button id="searchButton" class="bg-green-700 text-white px-4 py-3 rounded-lg hover:bg-green-800 transition">🔍</button>
+      </div>
+
+      <!-- Tabela -->
+      <div class="overflow-x-auto">
+        <table class="w-full border-collapse">
+          <thead>
+            <tr class="bg-green-700 text-white">
+              <th class="p-3 text-left">Nome</th>
+              <th class="p-3 text-left">Entrada</th>
+              <th class="p-3 text-left">Saída</th>
+              <th class="p-3 text-left">Crachá</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% guests.forEach(g => { %>
+            <tr data-id="<%= g.id %>">
+              <td class="p-3 text-blue-600 hover:underline cursor-pointer" onclick="openLookup('<%= g.id %>')">
+                <%= g.nome_completo %>
+              </td>
+              <td class="p-3"><%= g.entry_time ? formatTimestamp(g.entry_time) : '-' %></td>
+              <td class="p-3"><%= g.exit_time ? formatTimestamp(g.exit_time) : '-' %></td>
+              <td class="p-3">
+                <button onclick="openBadge('<%= g.id %>','guests')" class="inline-flex items-center gap-2 bg-white border rounded-lg px-3 py-2 hover:shadow-md transition">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <rect x="3" y="3" width="7" height="7" stroke-width="2"/>
+                    <rect x="14" y="3" width="7" height="7" stroke-width="2"/>
+                    <rect x="3" y="14" width="7" height="7" stroke-width="2"/>
+                    <path d="M14 14h2v2h-2z" stroke-width="2"/>
+                  </svg>
+                  <span class="text-sm font-medium text-gray-800">Crachá</span>
+                </button>
+              </td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<%- include('partials/footer') %>
+
+
+<script id="omListData" type="application/json">
+  <%- JSON.stringify(amazonasOMList) %>
+</script>
+
+<script>
+/* -------------------------------------
+   BUSCA
+------------------------------------- */
+const searchInput = document.getElementById('searchInput');
+const searchButton = document.getElementById('searchButton');
+
+function filterGuests() {
+  const filter = searchInput.value.toLowerCase();
+  const rows = document.querySelectorAll("tbody tr");
+
+  rows.forEach(row => {
+    const nameCell = row.querySelector("td:first-child");
+    const nameText = nameCell.textContent.toLowerCase();
+    row.style.display = nameText.includes(filter) ? "" : "none";
+  });
+}
+
+searchButton.addEventListener("click", filterGuests);
+searchInput.addEventListener("keyup", e => { if (e.key === "Enter") filterGuests(); });
+
+
+
+/* -------------------------------------
+   CAMPOS DINÂMICOS
+------------------------------------- */
+const tipoSelect = document.getElementById('tipoVisitante');
+const empresaP = document.getElementById('empresaPermanenteFields');
+const empresaE = document.getElementById('empresaEsporadicaFields');
+const om = document.getElementById('omFields');
+
+function updateFields() {
+  const value = tipoSelect.value;
+
+  empresaP.classList.add('hidden');
+  empresaE.classList.add('hidden');
+  om.classList.add('hidden');
+
+  if (value === 'empresa_permanente') empresaP.classList.remove('hidden');
+  if (value === 'empresa_esporadica') empresaE.classList.remove('hidden');
+  if (value === 'organizacao_militar') om.classList.remove('hidden');
+}
+tipoSelect.addEventListener('change', updateFields);
+
+
+
+// ---------------------------
+// OM → Preencher Guarnição Automática
+// ---------------------------
+
+// array enviado pelo backend
+const omList = JSON.parse(document.getElementById("omListData").textContent);
+
+const omSelect = document.getElementById("omSelect");
+const omGuarnicao = document.querySelector("input[name='om_guarnicao']");
+
+omSelect.addEventListener("change", () => {
+  const selected = omList.find(om => om.value === omSelect.value);
+
+  if (!selected) return;
+
+  // Se for "outro", limpa e permite digitar
+  if (selected.value === "outro") {
+    omGuarnicao.value = "";
+    omGuarnicao.removeAttribute("readonly");
+    return;
+  }
+
+  // Caso contrário: preenche e trava o campo
+  omGuarnicao.value = selected.guarnicao || "";
+  omGuarnicao.setAttribute("readonly", true);
+});
+
+// ---------------------------
+// Exibir input ao selecionar "Outro"
+// ---------------------------
+const omOutroInput = document.getElementById("omOutroInput");
+
+omSelect.addEventListener("change", () => {
+  const selected = omList.find(om => om.value === omSelect.value);
+
+  // Exibir caixa de texto para OM manual
+  if (selected && selected.value === "outro") {
+    omOutroInput.classList.remove("hidden");
+    omGuarnicao.value = "";
+    omGuarnicao.removeAttribute("readonly");
+    return;
+  }
+
+  // Caso não seja "outro"
+  omOutroInput.classList.add("hidden");
+
+  if (selected) {
+    omGuarnicao.value = selected.guarnicao || "";
+    omGuarnicao.setAttribute("readonly", true);
+  }
+});
+
+
+
+/* -------------------------------------
+   FORM
+------------------------------------- */
+const form = document.getElementById('addGuestForm');
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const formData = new FormData(form);
+  
+  const data = Object.fromEntries(formData.entries());
+
+  // Ajustar OM quando o usuário escolhe "Outro"
+  if (data.tipo_visitanteFK === "organizacao_militar") {
+    if (data.om_nome === "outro") {
+      data.om_nome = data.om_outro_manual || "";
+    }
+  }
+
+  // Remover o campo om_outro_manual se não for necessário
+  delete data.om_outro_manual;
+
+
+  try {
+    const res = await fetch('/guests/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    if (!res.ok) throw new Error('Erro ao criar visitante');
+    const result = await res.json();
+    const visitanteID = result.id;
+
+    window.open(`/guests/lookup?id=${visitanteID}`, '_blank');
+
+    form.reset();
+    updateFields();
+
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+
+/* -------------------------------------
+   OUTRAS FUNÇÕES
+------------------------------------- */
+function openLookup(id){
+  window.open(`/guests/lookup?id=${id}`, '_blank');
+}
+
+function openBadge(id, type){
+  const targetUrl = `${window.location.origin}/${type}/lookup?id=${id}`;
+  const generatorUrl = `/qrgen/create?text=${encodeURIComponent(targetUrl)}&type=${type}`;
+  window.open(generatorUrl, '_blank');
+}
+</script>
+
+</body>
+</html>

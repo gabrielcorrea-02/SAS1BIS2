@@ -1,0 +1,486 @@
+<%- include('partials/head', { title: 'Corpo Permanente - 1°BIS(AMV)' })%>
+
+<body class="bg-gray-100 text-gray-800 font-sans">
+
+<style>
+/* ================================
+   MODAIS CENTRALIZADOS (AJUSTADO)
+   - escondidos por padrão
+   - só mostram quando recebem a classe .active
+=============================== */
+.modal-center {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(2px);
+
+    /* escondido por padrão */
+    display: none;
+    align-items: center;
+    justify-content: center;
+
+    z-index: 9998;
+}
+
+/* ativa exibição centralizada */
+.modal-center.active {
+    display: flex;
+}
+
+/* webcam sempre acima do modal de edição */
+#webcamModal.modal-center.active {
+    z-index: 10050;
+}
+
+/* conteúdo do modal (card) */
+.modal-card {
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    max-height: 90vh;
+    max-width: 95vw;
+    overflow-y: auto;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+}
+
+/* toque final: tamanho e responsividade do card */
+.modal-card.w-520 { max-width: 520px; width: 95%; }
+.modal-card.w-420 { max-width: 420px; width: 95%; }
+
+/* botão fechar estilizado */
+.modal-close-btn {
+  background: transparent;
+  border: 0;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: #6b7280; /* gray-500 */
+  cursor: pointer;
+}
+.modal-close-btn:hover { color: #dc2626; } /* red-600 */
+
+/* evitar que o body role quando modal aberto */
+body.modal-open { overflow: hidden; }
+</style>
+
+<!-- Header -->
+<%- include('partials/header') %>
+
+<div class="flex min-h-screen">
+  <%- include('partials/sidebar') %>
+
+  <!-- Main content -->
+  <main class="flex-1 p-6">
+
+    <!-- Informações do membro -->
+    <section class="bg-white shadow-lg rounded-xl p-6 mb-8">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">Informações do Membro</h2>
+        <button onclick="openEditModal()" 
+          class="bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-lg shadow">
+          Editar
+        </button>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+
+        <!-- Foto -->
+        <div>
+          <div class="bg-gray-200 rounded-lg flex items-center justify-center h-48 w-full overflow-hidden">
+            <img id="member-photo" src="/photo/cp/<%= member.id %>" 
+                 class="w-40 h-40 rounded-full object-cover shadow">
+          </div>
+        </div>
+
+        <!-- Dados -->
+        <div class="space-y-2">
+          <p><strong>Nome Completo:</strong> <%= member.nome_completo %></p>
+          <% if(member.nome_de_guerra){ %>
+            <p><strong>Nome de Guerra:</strong> <%= member.nome_de_guerra %></p>
+          <% } %>
+          <% if(member.id_mil){ %>
+            <p><strong>ID Militar:</strong> <%= member.id_mil %></p>
+          <% } %>
+          <% if(member.om_nome){ %>
+            <p><strong>Organização Militar:</strong> <%= member.om_nome %></p>
+          <% } %>
+
+          <!-- Botões -->
+          <div class="flex gap-3 mt-4">
+            <button onclick="openBadge('<%= member.id %>')" 
+              class="bg-green-700 text-white py-2 px-4 rounded hover:bg-green-800 transition">
+              Imprimir Crachá
+            </button>
+            <button onclick="registerEntry('<%= member.id %>')" 
+              class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition">
+              Registrar Entrada
+            </button>
+            <button onclick="registerExit('<%= member.id %>')" 
+              class="bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700 transition">
+              Registrar Saída
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+<!-- Veículos -->
+    <section class="bg-white shadow-lg rounded-xl p-6 mb-8">
+      <h3 class="text-lg font-bold mb-4">Veículos do Membro</h3>
+
+      <form id="addVehicleForm" class="grid gap-5 md:grid-cols-6 mb-4">
+        <input type="text" name="placa" placeholder="Placa" required class="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600">
+        <input type="text" name="marca" placeholder="Marca" class="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600">
+        <input type="text" name="modelo" placeholder="Modelo" class="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600">
+        <input type="text" name="cor" placeholder="Cor" class="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600">
+        <input type="text" name="tipo" placeholder="Tipo" class="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600">
+        <button type="submit" class="bg-green-700 text-white py-2 px-4 rounded hover:bg-green-800 transition">
+          Adicionar
+        </button>
+      </form>
+
+      <table class="w-full text-left border border-gray-200" id="vehiclesTable">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="p-2 border">Placa</th>
+            <th class="p-2 border">Marca</th>
+            <th class="p-2 border">Modelo</th>
+            <th class="p-2 border">Cor</th>
+            <th class="p-2 border">Tipo</th>
+            <th class="p-2 border text-center">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if(member.vehicles && member.vehicles.length > 0){ %>
+            <% member.vehicles.forEach(v => { %>
+            <tr data-id="<%= v.id %>">
+              <td class="p-2 border"><%= v.placa %></td>
+              <td class="p-2 border"><%= v.marca || '-' %></td>
+              <td class="p-2 border"><%= v.modelo || '-' %></td>
+              <td class="p-2 border"><%= v.cor || '-' %></td>
+              <td class="p-2 border"><%= v.tipo || '-' %></td>
+              <td class="p-2 border text-center">
+                <button class="deleteBtn bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition"
+                        onclick="deleteVehicle('<%= v.id %>')">Excluir</button>
+              </td>
+            </tr>
+            <% }) %>
+          <% } else { %>
+            <tr id="noVehiclesRow">
+              <td class="p-2 border text-center" colspan="5">Sem veículos cadastrados</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Histórico -->
+<section class="bg-white shadow-lg rounded-xl p-6 mb-8">
+  <h3 class="text-lg font-bold mb-4">Histórico de Acessos</h3>
+  <table class="w-full text-left border border-gray-200">
+    <thead class="bg-gray-100">
+      <tr>
+        <th class="p-2 border">Entrada</th>
+        <th class="p-2 border">Saída</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if(member.history && member.history.length > 0){ %>
+        <% member.history.forEach(a => { %>
+        <tr>
+          <td class="p-2 border"><%= a.entry_time ? formatTimestamp(a.entry_time) : '-' %></td>
+          <td class="p-2 border"><%= a.exit_time ? formatTimestamp(a.exit_time) : '-' %></td>
+        </tr>
+        <% }) %>
+      <% } else { %>
+        <tr>
+          <td class="p-2 border text-center" colspan="2">Sem registros</td>
+        </tr>
+      <% } %>
+    </tbody>
+  </table>
+</section>
+
+  </main>
+</div>
+
+<%- include('partials/footer') %>
+
+<!-- ============================
+     MODAL DE EDIÇÃO (CENTRALIZADO)
+============================ -->
+<div id="editModal" class="modal-center" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="modal-card w-520 relative">
+
+    <button onclick="closeEditModal()" aria-label="Fechar" class="modal-close-btn absolute right-4 top-4">
+      ×
+    </button>
+
+    <h2 class="text-xl font-bold mb-4">Editar Membro</h2>
+
+    <form id="editForm" method="POST" action="/cp/update/<%= member.id %>" enctype="multipart/form-data">
+
+      <label class="block font-semibold mt-2">Nome Completo</label>
+      <input name="nome_completo" value="<%= member.nome_completo %>"
+        class="w-full p-3 rounded border border-gray-300 mb-3">
+
+      <label class="block font-semibold">Nome de Guerra</label>
+      <input name="nome_de_guerra" value="<%= member.nome_de_guerra || '' %>"
+        class="w-full p-3 rounded border border-gray-300 mb-3">
+
+      <label class="block font-semibold">ID Militar</label>
+      <input name="id_mil" value="<%= member.id_mil || '' %>"
+        class="w-full p-3 rounded border border-gray-300 mb-3">
+
+      <label class="block font-semibold">Foto (upload)</label>
+      <input type="file" name="foto" id="fotoUpload" accept="image/*"
+        class="w-full mb-3">
+
+      <button type="button" id="openWebcamBtn" 
+        class="bg-blue-600 text-white py-2 px-4 rounded mb-3">
+        Usar Webcam
+      </button>
+
+      <div class="flex justify-center">
+        <img id="editPreview" src="/photo/cp/<%= member.id %>" 
+             class="w-32 h-32 rounded-full object-cover shadow mt-3">
+      </div>
+
+      <button type="submit" class="bg-green-600 hover:bg-green-700 text-white py-2 px-6 rounded-lg w-full mt-5">
+        Salvar
+      </button>
+    </form>
+  </div>
+</div>
+
+
+<!-- ============================
+     MODAL DA WEBCAM (CENTRALIZADO)
+============================ -->
+<div id="webcamModal" class="modal-center" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="modal-card w-420">
+
+    <h2 class="text-lg font-bold mb-2 text-center">Capturar Foto</h2>
+
+    <video id="webcam" autoplay playsinline class="w-full rounded-md mb-3 shadow"></video>
+    <canvas id="webcamCanvas" class="hidden"></canvas>
+
+    <div class="flex justify-center gap-3 mt-3">
+      <button id="captureBtn" 
+        class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">
+        Capturar
+      </button>
+
+      <button id="closeWebcamBtn" 
+        class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded">
+        Fechar
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+<script>
+
+
+
+
+/* =========================
+   Helpers: open/close + body lock + click outside + ESC
+   ========================= */
+
+function lockBody(on) {
+  if (on) document.body.classList.add('modal-open');
+  else document.body.classList.remove('modal-open');
+}
+
+function onKeyEscape(e) {
+  if (e.key === 'Escape') {
+    // fecha ambos se abertos
+    closeWebcamModal();
+    closeEditModal();
+  }
+}
+document.addEventListener('keydown', onKeyEscape);
+
+/* ========= MODAL EDIT ========= */
+const editModal = document.getElementById('editModal');
+function openEditModal(){
+  editModal.classList.add('active');
+  editModal.setAttribute('aria-hidden','false');
+  lockBody(true);
+}
+function closeEditModal(){
+  editModal.classList.remove('active');
+  editModal.setAttribute('aria-hidden','true');
+  lockBody(false);
+}
+
+// fechar ao clicar fora do card
+editModal.addEventListener('click', (e) => {
+  if (e.target === editModal) closeEditModal();
+});
+
+/* ========= WEBCAM ========= */
+let webcamStream = null;
+const webcamModal = document.getElementById('webcamModal');
+const webcamVideo = document.getElementById('webcam');
+
+document.getElementById('openWebcamBtn').addEventListener('click', openWebcamModal);
+document.getElementById('closeWebcamBtn').addEventListener('click', closeWebcamModal);
+
+function openWebcamModal(){
+  // abre a webcam modal por cima do edit modal
+  webcamModal.classList.add('active');
+  webcamModal.setAttribute('aria-hidden','false');
+  lockBody(true);
+
+  // start stream
+  navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+      webcamStream = stream;
+      webcamVideo.srcObject = stream;
+    })
+    .catch(err => {
+      alert('Erro ao acessar a câmera: ' + (err.message || err));
+      // se falhar, fecha modal
+      closeWebcamModal();
+    });
+}
+
+function closeWebcamModal(){
+  webcamModal.classList.remove('active');
+  webcamModal.setAttribute('aria-hidden','true');
+
+  // stop stream
+  if (webcamStream) {
+    webcamStream.getTracks().forEach(t => t.stop());
+    webcamStream = null;
+  }
+
+  // se o edit modal ainda está aberto, mantém body travado; senão libera
+  if (!editModal.classList.contains('active')) lockBody(false);
+}
+
+// fechar ao clicar fora do card
+webcamModal.addEventListener('click', (e) => {
+  if (e.target === webcamModal) closeWebcamModal();
+});
+
+/* ========= CAPTURAR FOTO ========= */
+document.getElementById('captureBtn').addEventListener('click', () => {
+  const video = webcamVideo;
+  const canvas = document.getElementById('webcamCanvas');
+
+  const size = Math.min(video.videoWidth, video.videoHeight);
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+
+  ctx.drawImage(video,
+    (video.videoWidth - size) / 2,
+    (video.videoHeight - size) / 2,
+    size, size,
+    0, 0, size, size
+  );
+
+  canvas.toBlob(blob => {
+    const file = new File([blob], "webcam.jpg", { type: "image/jpeg" });
+
+    // preview no modal de edição
+    document.getElementById('editPreview').src = URL.createObjectURL(file);
+
+    // injetar no input de upload
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    document.getElementById('fotoUpload').files = dt.files;
+
+    // fecha webcam modal
+    closeWebcamModal();
+  }, 'image/jpeg', 0.92);
+});
+
+/* ========= UPLOAD MANUAL PREVIEW ========= */
+document.getElementById('fotoUpload').addEventListener('change', (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const url = URL.createObjectURL(f);
+  document.getElementById('editPreview').src = url;
+});
+
+
+function openBadge(id){
+  const targetUrl = `${window.location.origin}/cp/lookup?id=${id}`;
+  const generatorUrl = `/qrgen/createcp?text=${encodeURIComponent(targetUrl)}&id=${id}`;
+  window.open(generatorUrl, '_blank');
+}
+
+async function registerEntry(id){
+  try {
+    const res = await fetch('/cp/entry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ corpo_permanente_id: id })
+    });
+    if(res.ok) location.reload();
+  } catch(err) { console.error(err); }
+}
+
+async function registerExit(id){
+  try {
+    const res = await fetch(`/cp/exit/${id}`, { method: 'POST' });
+    if(res.ok) location.reload();
+  } catch(err) { console.error(err); }
+}
+
+/* ======== Veículos ======== */
+document.getElementById('addVehicleForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  
+  const placa = document.querySelector('input[name="placa"]').value.trim();
+  const marca = document.querySelector('input[name="marca"]').value.trim();
+  const modelo = document.querySelector('input[name="modelo"]').value.trim();
+  const cor   = document.querySelector('input[name="cor"]').value.trim();
+  const tipo  = document.querySelector('input[name="tipo"]').value.trim();
+  const corpo_permanenteFK = '<%= member.id %>';
+
+  if (!placa || !corpo_permanenteFK) {
+    alert('Placa e membro obrigatórios');
+    return;
+  }
+
+  const data = { placa, marca, modelo, cor, tipo, corpo_permanenteFK };
+
+  try {
+    const res = await fetch('/vehicles/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    const result = await res.json();
+    if(result.success){
+      location.reload();
+    } else {
+      alert(result.message || 'Erro ao adicionar veículo');
+    }
+  } catch(err){
+    console.error(err);
+    alert('Erro ao adicionar veículo');
+  }
+});
+
+async function deleteVehicle(id){
+  if(!confirm('Deseja realmente excluir este veículo?'))
+    return;
+  await fetch(`/vehicles/delete/${id}`,{method:'POST'}).then(r=>r.ok&&location.reload()).catch(console.error);
+}
+
+
+</script>
+
+</body>
+</html>
+
+

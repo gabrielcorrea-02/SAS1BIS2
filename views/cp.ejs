@@ -1,0 +1,320 @@
+<%- include('partials/head', { title: 'Corpo Permanente - 1°BIS(AMV)' })%>
+
+<body class="bg-gray-100 text-gray-800 font-sans">
+
+<!-- Header -->
+<%- include('partials/header') %>
+
+<div class="flex min-h-screen">
+  <%- include('partials/sidebar') %>
+
+  <main class="flex-1 p-6">
+
+    <!-- Novo Membro -->
+    <section class="bg-white shadow-lg rounded-xl p-6 mb-8">
+      <h2 class="text-xl font-bold mb-4">Novo Membro</h2>
+
+      <form method="POST" action="/cp/add" enctype="multipart/form-data" class="grid gap-4 md:grid-cols-2">
+
+        <!-- Botão abrir modal -->
+        <button type="button" onclick="openModal()" 
+                class="p-3 bg-blue-600 text-white rounded-lg md:col-span-2 hover:bg-blue-700">
+          Tirar Foto com Webcam
+        </button>
+
+        <!-- Input real enviado ao servidor -->
+        <input type="file" name="foto" id="fotoInput" class="hidden" />
+
+        <!-- Upload manual -->
+        <div class="md:col-span-2 p-4 border rounded-lg bg-gray-50">
+          <h3 class="font-semibold mb-2">Foto (upload ou webcam)</h3>
+          
+          <input type="file" id="manualUpload" accept="image/*"
+                 class="p-3 border rounded-lg w-full mb-3">
+
+          <!-- Preview da foto final -->
+          <img id="previewImgForm"
+               class="hidden w-40 h-40 rounded-lg object-cover border mx-auto">
+        </div>
+
+        <!-- Campos de texto -->
+        <input type="text" name="nome_completo" placeholder="Nome Completo" required class="p-3 border rounded-lg md:col-span-2">
+        <input type="text" name="nome_de_guerra" placeholder="Nome de Guerra (opcional)" class="p-3 border rounded-lg md:col-span-2">
+        <input type="text" name="id_mil" placeholder="ID Militar" class="p-3 border rounded-lg">
+
+        <!-- Veículo -->
+        <div class="md:col-span-2 p-4 border rounded-lg bg-gray-50">
+          <h3 class="font-semibold mb-2">Veículo (opcional)</h3>
+          <div class="grid md:grid-cols-5 gap-4">
+            <input type="text" name="placa" placeholder="Placa" class="p-3 border rounded-lg">
+            <input type="text" name="marca" placeholder="Marca" class="p-3 border rounded-lg">
+            <input type="text" name="modelo" placeholder="Modelo" class="p-3 border rounded-lg">
+            <input type="text" name="cor" placeholder="Cor" class="p-3 border rounded-lg">
+            <input type="text" name="tipo" placeholder="Tipo (carro/moto/etc)" class="p-3 border rounded-lg">
+          </div>
+        </div>
+
+        <button type="submit" class="bg-green-700 text-white py-3 rounded-lg md:col-span-2 hover:bg-green-800 transition">
+          Registrar
+        </button>
+      </form>
+    </section>
+
+
+    <!-- Lista -->
+    <section class="bg-white shadow-lg rounded-xl p-6">
+      <h2 class="text-xl font-bold mb-4">Membros Registrados</h2>
+            <!-- Barra de Busca -->
+      <div class="flex items-center gap-2 mb-4">
+        <input 
+          type="text" 
+          id="searchCpInput" 
+          placeholder="Buscar membro..." 
+          class="p-3 border rounded-lg w-full"
+        >
+        <button 
+          id="searchCpButton"
+          class="bg-green-700 text-white px-4 py-3 rounded-lg hover:bg-green-800 transition"
+        >
+          🔍
+        </button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full border-collapse">
+          <thead>
+            <tr class="bg-green-700 text-white">
+              <th class="p-3 text-left">Nome Completo</th>
+              <th class="p-3 text-left">Nome de Guerra</th>
+              <th class="p-3 text-left">ID Militar</th>
+              <th class="p-3 text-left">Entrada</th>
+              <th class="p-3 text-left">Saída</th>
+              <th class="p-3 text-left">Crachá</th>
+            </tr>
+          </thead>
+          <tbody>
+  <% cps.forEach(cp => { %>
+    <tr data-id="<%= cp.id %>">
+      <td class="p-3 text-blue-600 hover:underline cursor-pointer" 
+          onclick="openLookup('<%= cp.id %>')">
+        <%= cp.nome_completo %>
+      </td>
+      <td class="p-3"><%= cp.nome_de_guerra || '-' %></td>
+      <td class="p-3"><%= cp.id_mil || '-' %></td>
+      <td class="p-3"><%= cp.entry_time ? formatTimestamp(cp.entry_time) : '-' %></td>
+      <td class="p-3"><%= cp.exit_time ? formatTimestamp(cp.exit_time) : '-' %></td>
+      <td class="p-3">
+        <button onclick="openBadge('<%= cp.id %>','cp')" 
+                class="inline-flex items-center gap-2 bg-white border rounded-lg px-3 py-2 hover:shadow-md transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="3" width="7" height="7" stroke-width="2"/>
+            <rect x="14" y="3" width="7" height="7" stroke-width="2"/>
+            <rect x="3" y="14" width="7" height="7" stroke-width="2"/>
+            <path d="M14 14h2v2h-2z" stroke-width="2"/>
+          </svg>
+          <span class="text-sm font-medium text-gray-800">Crachá</span>
+        </button>
+      </td>
+    </tr>
+  <% }) %>
+</tbody>
+
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+  <%- include('partials/footer') %>
+
+
+
+
+
+<!-- ===================================================== -->
+<!--                    MODAL DE WEBCAM                    -->
+<!-- ===================================================== -->
+
+<div id="webcamModal" 
+     class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 flex">
+
+  <div class="bg-white p-6 rounded-2xl shadow-2xl w-[90%] max-w-md relative">
+
+    <h2 class="text-lg font-bold mb-4 text-center">Capturar Foto</h2>
+
+    <div class="w-full aspect-square bg-black rounded-xl overflow-hidden flex items-center justify-center">
+      <video id="camera" autoplay playsinline class="w-full h-full object-cover"></video>
+      <img id="preview" class="hidden w-full h-full object-cover" />
+    </div>
+
+    <canvas id="snapshot" width="600" height="600" class="hidden"></canvas>
+
+    <div class="flex justify-between mt-4">
+      <button id="retryBtn" onclick="retakePhoto()" 
+              class="hidden bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700">
+        Repetir
+      </button>
+
+      <button id="captureBtn" onclick="takePicture()" 
+              class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+        Capturar
+      </button>
+
+      <button onclick="closeModal()" 
+              class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
+        Fechar
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+
+
+<script>
+
+// =====================================================
+//                 BUSCA NA TABELA CP
+// =====================================================
+const searchCpInput = document.getElementById('searchCpInput');
+const searchCpButton = document.getElementById('searchCpButton');
+
+function filterCpTable() {
+  const filter = searchCpInput.value.toLowerCase();
+  const rows = document.querySelectorAll("tbody tr");
+
+  rows.forEach(row => {
+
+    const nameCell = row.querySelector("td:first-child");
+    const nameWarCell = row.querySelector("td:nth-child(2)");
+    const idMilCell = row.querySelector("td:nth-child(3)");
+
+    const nameText = nameCell.textContent.toLowerCase();
+    const nameWarText = nameWarCell.textContent.toLowerCase();
+    const idMilText = idMilCell.textContent.toLowerCase();
+
+    // Mostra a linha se combinar com nome OU com ID Militar
+    row.style.display =
+      nameText.includes(filter) || nameWarText.includes(filter) || idMilText.includes(filter)
+        ? ""
+        : "none";
+  });
+}
+
+searchCpButton.addEventListener("click", filterCpTable);
+
+searchCpInput.addEventListener("keyup", (e) => {
+  if (e.key === "Enter") filterCpTable();
+});
+// =====================================================  
+
+function openLookup(id){
+  const url = `/cp/lookup?id=${id}`;
+  window.open(url, '_blank'); // abre em nova aba
+}
+
+/* QR Badge */
+function openBadge(id, type){
+  const url = `${window.location.origin}/${type}/lookup?id=${id}`;
+  window.open(`/qrgen/createcp?text=${encodeURIComponent(url)}&id=${id}`, '_blank');
+}
+
+let stream = null;
+
+/* =============================
+        MODAL
+============================= */
+function openModal() {
+  const modal = document.getElementById("webcamModal");
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+
+  navigator.mediaDevices.getUserMedia({ video: true }).then(s => {
+    stream = s;
+    document.getElementById("camera").srcObject = s;
+  });
+}
+
+function closeModal() {
+  const modal = document.getElementById("webcamModal");
+  modal.classList.add("hidden");
+
+  if (stream) stream.getTracks().forEach(t => t.stop());
+
+  document.getElementById("preview").classList.add("hidden");
+  document.getElementById("camera").classList.remove("hidden");
+
+  document.getElementById("retryBtn").classList.add("hidden");
+  document.getElementById("captureBtn").classList.remove("hidden");
+}
+
+/* =============================
+       WEBCAM CAPTURE
+============================= */
+function takePicture() {
+  const video = document.getElementById("camera");
+  const canvas = document.getElementById("snapshot");
+  const ctx = canvas.getContext("2d");
+
+  const size = Math.min(video.videoWidth, video.videoHeight);
+  const sx = (video.videoWidth - size) / 2;
+  const sy = (video.videoHeight - size) / 2;
+
+  ctx.drawImage(video, sx, sy, size, size, 0, 0, canvas.width, canvas.height);
+
+  canvas.toBlob(blob => {
+    const file = new File([blob], "webcam.jpg", { type: "image/jpeg" });
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    document.getElementById("fotoInput").files = dt.files;
+
+    // Preview no formulário
+    document.getElementById("previewImgForm").src = canvas.toDataURL("image/jpeg");
+    document.getElementById("previewImgForm").classList.remove("hidden");
+  });
+
+  // Preview no modal
+  const preview = document.getElementById("preview");
+  preview.src = canvas.toDataURL("image/jpeg");
+  preview.classList.remove("hidden");
+
+  document.getElementById("camera").classList.add("hidden");
+
+  document.getElementById("retryBtn").classList.remove("hidden");
+  document.getElementById("captureBtn").classList.add("hidden");
+}
+
+function retakePhoto() {
+  document.getElementById("preview").classList.add("hidden");
+  document.getElementById("camera").classList.remove("hidden");
+
+  document.getElementById("retryBtn").classList.add("hidden");
+  document.getElementById("captureBtn").classList.remove("hidden");
+}
+
+/* =============================
+     UPLOAD MANUAL -> COPIA PARA fotoInput
+============================= */
+document.getElementById("manualUpload").addEventListener("change", function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  document.getElementById("fotoInput").files = dt.files;
+
+  // Preview
+  const reader = new FileReader();
+  reader.onload = evt => {
+    const preview = document.getElementById("previewImgForm");
+    preview.src = evt.target.result;
+    preview.classList.remove("hidden");
+  };
+  reader.readAsDataURL(file);
+});
+</script>
+
+</body>
+</html>

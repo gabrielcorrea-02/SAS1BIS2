@@ -1,0 +1,245 @@
+<%- include('partials/head', { title: 'Visitante - 1°BIS(AMV)' })%>
+
+<body class="bg-gray-100 text-gray-800 font-sans">
+  <!-- Header -->
+  <%- include('partials/header') %>
+
+<div class="flex min-h-screen">
+  <!-- Sidebar -->
+  <%- include('partials/sidebar') %>
+  <!-- Main content -->
+  <main class="flex-1 p-6">
+
+    <!-- Informações do visitante -->
+    <section class="bg-white shadow-lg rounded-xl p-6 mb-8">
+      <h2 class="text-xl font-bold mb-4">Informações do Visitante</h2>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- Foto
+        <div>
+          <% if(guest.foto){ %>
+            <img src="data:image/png;base64,<%= guest.foto.toString('base64') %>" alt="Foto" class="rounded-lg border w-full h-auto">
+          <% } else { %>
+            <div class="bg-gray-200 rounded-lg flex items-center justify-center h-48 w-full">
+              Sem Foto
+            </div>
+          <% } %>
+        </div> -->
+
+        <!-- Dados -->
+        <div class="space-y-2">
+          <p><strong>Nome Completo:</strong> <%= guest.nome_completo %></p>
+          <% if(guest.nome_de_guerra) { %>
+            <p><strong>Nome de Guerra:</strong> <%= guest.nome_de_guerra %></p>
+          <% } %>
+          <% if(guest.objetivo) { %>
+            <p><strong>Objetivo:</strong> <%= guest.objetivo %></p>
+          <% } %>
+          <% if(guest.tipo_visitante_nome) { %>
+            <p><strong>Tipo:</strong> <%= guest.tipo_visitante_nome %></p>
+          <% } %>
+          <% if(guest.empresa_permanente_nome){ %>
+            <p><strong>Empresa Permanente:</strong> <%= guest.empresa_permanente_nome %></p>
+          <% } %>
+          <% if(guest.empresa_esporadica_nome){ %>
+            <p><strong>Empresa Esporádica:</strong> <%= guest.empresa_esporadica_nome %></p>
+          <% } %>
+          <% if(guest.empresa_esporadica_setor){ %>
+            <p><strong>Setor:</strong> <%= guest.empresa_esporadica_setor %></p>
+          <% } %>
+          <% if(guest.om_nome){ %>
+            <p><strong>Organização Militar:</strong> <%= guest.om_nome %></p>
+          <% } %>
+          <% if(guest.om_guarnicao){ %>
+            <p><strong>Guarnição:</strong> <%= guest.om_guarnicao %></p>
+          <% } %>
+
+          <!-- Botões -->
+          <div class="flex gap-3 mt-4">
+            <button onclick="openBadge('<%= guest.id %>')" 
+              class="bg-green-700 text-white py-2 px-4 rounded hover:bg-green-800 transition">
+              Imprimir Crachá
+            </button>
+
+            <button onclick="registerEntry('<%= guest.id %>')" 
+              class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition">
+              Registrar Entrada
+            </button>
+
+            <button onclick="registerExit('<%= guest.id %>')" 
+              class="bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700 transition">
+              Registrar Saída
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+
+    <!-- VEICULOS-->
+
+    <!-- Veículos -->
+    <section class="bg-white shadow-lg rounded-xl p-6 mb-8">
+      <h3 class="text-lg font-bold mb-4">Veículos do Visitante</h3>
+
+      <form id="addVehicleForm" class="grid gap-5 md:grid-cols-6 mb-4">
+        <input type="text" name="placa" placeholder="Placa" required class="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600">
+        <input type="text" name="marca" placeholder="Marca" class="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600">
+        <input type="text" name="modelo" placeholder="Modelo" class="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600">
+        <input type="text" name="cor" placeholder="Cor" class="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600">
+        <input type="text" name="tipo" placeholder="Tipo" class="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600">
+        <button type="submit" class="bg-green-700 text-white py-2 px-4 rounded hover:bg-green-800 transition">
+          Adicionar
+        </button>
+      </form>
+
+      <table class="w-full text-left border border-gray-200" id="vehiclesTable">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="p-2 border">Placa</th>
+            <th class="p-2 border">Marca</th>
+            <th class="p-2 border">Modelo</th>
+            <th class="p-2 border">Cor</th>
+            <th class="p-2 border">Tipo</th>
+            <th class="p-2 border text-center">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if(guest.vehicles && guest.vehicles.length > 0){ %>
+            <% guest.vehicles.forEach(v => { %>
+            <tr data-id="<%= v.id %>">
+              <td class="p-2 border"><%= v.placa %></td>
+              <td class="p-2 border"><%= v.marca || '-' %></td>
+              <td class="p-2 border"><%= v.modelo || '-' %></td>
+              <td class="p-2 border"><%= v.cor || '-' %></td>
+              <td class="p-2 border"><%= v.tipo || '-' %></td>
+              <td class="p-2 border text-center">
+                <button class="deleteBtn bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition"
+                        onclick="deleteVehicle('<%= v.id %>')">Excluir</button>
+              </td>
+            </tr>
+            <% }) %>
+          <% } else { %>
+            <tr id="noVehiclesRow">
+              <td class="p-2 border text-center" colspan="5">Sem veículos cadastrados</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </section>
+
+
+
+
+    <!-- Histórico de Acessos -->
+<section class="bg-white shadow-lg rounded-xl p-6 mb-8">
+  <h3 class="text-lg font-bold mb-4">Histórico de Acessos</h3>
+  <table class="w-full text-left border border-gray-200">
+    <thead class="bg-gray-100">
+      <tr>
+        <th class="p-2 border">Entrada</th>
+        <th class="p-2 border">Saída</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if(guest.history && guest.history.length > 0){ %>
+        <% guest.history.forEach(a => { %>
+          <tr>
+            <td class="p-2 border"><%= a.entry_time ? formatTimestamp(a.entry_time) : '-' %></td>
+            <td class="p-2 border"><%= a.exit_time ? formatTimestamp(a.exit_time) : '-' %></td>
+          </tr>
+        <% }) %>
+      <% } else { %>
+        <tr>
+          <td class="p-2 border text-center" colspan="2">Sem registros</td>
+        </tr>
+      <% } %>
+    </tbody>
+  </table>
+</section>
+
+
+  </main>
+</div>
+
+<!-- Footer -->
+  <%- include('partials/footer') %>
+
+
+<!-- Scripts -->
+<script>
+function openBadge(id){
+  const targetUrl = `${window.location.origin}/guests/lookup?id=${id}`;
+  const generatorUrl = `/qrgen/create?text=${encodeURIComponent(targetUrl)}`;
+  window.open(generatorUrl, '_blank');
+}
+
+async function registerEntry(id){
+  try {
+    const res = await fetch('/access/entry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ visitante_id: id })
+    });
+    if(res.ok) location.reload();
+  } catch(err) { console.error(err); }
+}
+
+async function registerExit(id){
+  try {
+    const res = await fetch('/access/exit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ visitante_id: id })
+    });
+    if(res.ok) location.reload();
+  } catch(err) { console.error(err); }
+}
+
+/* ======== Veículos ======== */
+document.getElementById('addVehicleForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  
+  const placa = document.querySelector('input[name="placa"]').value.trim();
+  const marca = document.querySelector('input[name="marca"]').value.trim();
+  const modelo = document.querySelector('input[name="modelo"]').value.trim();
+  const cor   = document.querySelector('input[name="cor"]').value.trim();
+  const tipo  = document.querySelector('input[name="tipo"]').value.trim();
+  const visitanteFK = '<%= guest.id %>';
+
+  if (!placa || !visitanteFK) {
+    alert('Placa e membro obrigatórios');
+    return;
+  }
+
+  const data = { placa, marca, modelo, cor, tipo, visitanteFK };
+
+  try {
+    const res = await fetch('/vehicles/add_guest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    const result = await res.json();
+    if(result.success){
+      location.reload();
+    } else {
+      alert(result.message || 'Erro ao adicionar veículo');
+    }
+  } catch(err){
+    console.error(err);
+    alert('Erro ao adicionar veículo');
+  }
+});
+
+async function deleteVehicle(id){
+  if(!confirm('Deseja realmente excluir este veículo?'))
+    return;
+  await fetch(`/vehicles/delete_guest/${id}`,{method:'POST'}).then(r=>r.ok&&location.reload()).catch(console.error);
+}
+
+</script>
+
+</body>
+</html>

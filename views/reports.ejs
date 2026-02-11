@@ -1,0 +1,147 @@
+<%- include('partials/head', { title: 'Relatórios - 1°BIS(AMV)' })%>
+
+<body class="bg-gray-100 font-sans text-gray-800">
+
+  <%- include('partials/header') %>
+
+
+<div class="flex">
+  <!-- Sidebar -->
+  <%- include('partials/sidebar') %>
+
+  <!-- Conte�do principal -->
+  <main class="flex-1 p-6">
+    <form id="reportForm" class="grid grid-cols-2 gap-4 mb-6">
+      <select name="type" required class="p-2 border rounded">
+        <option value="cp">Corpo Permanente</option>
+        <option value="visitors">Visitantes</option>
+        <option value="veiculos">Veiculos</option>
+      </select>
+      <select name="format" required class="p-2 border rounded">
+        <option value="screen">Na Tela</option>
+        <option value="csv">CSV</option>
+        <option value="pdf">PDF</option>
+      </select>
+      <input type="date" name="startDate" required class="p-2 border rounded">
+      <input type="date" name="endDate" required class="p-2 border rounded">
+      <button type="submit" class="bg-green-700 text-white px-4 py-2 rounded col-span-1">Gerar</button>
+    </form>
+
+    <div id="reportResult" class="overflow-x-auto bg-white p-4 rounded shadow"></div>
+  </main>
+</div>
+
+<!-- Footer -->
+  <%- include('partials/footer') %>
+
+
+<script>
+document.getElementById('reportForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const formData = new FormData(e.target);
+  const data = Object.fromEntries(formData.entries());
+
+  // Converts ISO timestamp → UTC-4 → DD/MM/YYYY HH:mm
+  function formatTimestamp(ts) {
+    if (!ts) return '';
+    const date = new Date(ts);
+
+    // Force UTC-4 (Brazil west / AM / region)
+    const utc4 = new Date(date.getTime());
+
+    const dia = String(utc4.getDate()).padStart(2, '0');
+    const mes = String(utc4.getMonth() + 1).padStart(2, '0');
+    const ano = utc4.getFullYear();
+
+    const horas = String(utc4.getHours()).padStart(2, '0');
+    const mins = String(utc4.getMinutes()).padStart(2, '0');
+
+    return `${dia}/${mes}/${ano} ${horas}:${mins}`;
+  }
+
+  // Formats snake_case → Snake Case
+  function prettify(col) {
+    return col
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  // Detects if a value is a timestamp
+  function maybeFormatValue(val) {
+    if (!val) return '';
+    if (typeof val !== 'string') return val;
+
+    // crude detection: a string that looks like a date
+    if (!isNaN(Date.parse(val))) {
+      return formatTimestamp(val);
+    }
+
+    return val;
+  }
+
+  if (data.format === 'screen') {
+    const res = await fetch('/admin/reports', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    const json = await res.json();
+
+    if (json.success) {
+      const rows = json.data;
+
+      if (!rows.length) {
+        document.getElementById('reportResult').innerHTML =
+          `<p class="text-gray-600 text-center p-4">Nenhum registro encontrado.</p>`;
+        return;
+      }
+
+      const cols = Object.keys(rows[0]);
+
+      const thead = `
+        <thead class="bg-gray-200">
+          <tr>
+            ${cols.map(c => `<th class="px-3 py-2 border">${prettify(c)}</th>`).join('')}
+          </tr>
+        </thead>
+      `;
+
+      const tbody = `
+        <tbody>
+          ${rows.map(row => `
+            <tr>
+              ${cols.map(c => `
+                <td class="px-3 py-2 border">${maybeFormatValue(row[c])}</td>
+              `).join('')}
+            </tr>
+          `).join('')}
+        </tbody>
+      `;
+
+      const table = `
+        <table class="min-w-full border-collapse border border-gray-300 text-sm">
+          ${thead}
+          ${tbody}
+        </table>
+      `;
+
+      document.getElementById('reportResult').innerHTML = table;
+
+    } else {
+      alert(json.message);
+    }
+  } 
+  else {
+    // CSV/PDF fallback → open in new tab normally
+    const query = new URLSearchParams(data).toString();
+    window.open('/admin/reports?' + query, '_blank');
+  }
+});
+</script>
+
+
+</body>
+</html>
+
+

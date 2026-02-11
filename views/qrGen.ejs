@@ -1,0 +1,58 @@
+<%- include('partials/head', { title: 'Gerador de QR - 1°BIS(AMV)' })%>
+
+<body class="bg-gray-100 font-sans text-gray-800">
+
+<!-- Header -->
+<header class="bg-green-800 text-white shadow-lg">
+  <div class="container mx-auto flex justify-between items-center p-4">
+    <h1 class="text-xl font-bold">Entrada e Saida - 1°BIS(AMV)</h1>
+    <span class="text-sm">Bem-vindo, <%= user.username %>!</span>
+  </div>
+</header>
+
+<div class="flex min-h-screen">
+  <!-- Sidebar -->
+  <%- include('partials/sidebar') %>
+
+  <!-- Main content -->
+  <main class="flex-1 p-6">
+    <section class="bg-white shadow-lg rounded-xl p-6">
+      <h2 class="text-xl font-bold mb-4">Gerador de QR Code</h2>
+      
+      <!-- Formulário -->
+      <form id="qrForm" class="grid gap-4 md:grid-cols-2">
+        <input type="text" id="qrText" placeholder="Digite o conteúdo do QR Code" required class="p-3 border rounded-lg md:col-span-1">
+        <button type="submit" class="bg-green-700 text-white py-3 rounded-lg md:col-span-1 hover:bg-green-800 transition">Gerar QR</button>
+      </form>
+
+      <!-- Local do QR Code -->
+      <div class="mt-6 flex justify-center">
+        <img id="qrImage" src="" alt="Seu QR Code aparecerá aqui" class="bg-white p-4 shadow-lg rounded-lg">
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Footer -->
+<%- include('partials/footer') %>
+
+<script>
+document.getElementById('qrForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const text = document.getElementById('qrText').value.trim();
+  if(!text) return alert('Digite algo para gerar o QR Code');
+
+  // Aqui chamamos a rota que gera o QR
+  try {
+    const res = await fetch(`/qrgen/create?text=${encodeURIComponent(text)}`);
+    if(!res.ok) throw new Error('Erro ao gerar QR');
+    const blob = await res.blob();
+    document.getElementById('qrImage').src = URL.createObjectURL(blob);
+  } catch(err) {
+    alert(err.message);
+  }
+});
+</script>
+
+</body>
+</html>

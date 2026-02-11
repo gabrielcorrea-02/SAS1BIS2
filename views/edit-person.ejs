@@ -1,0 +1,29 @@
+<%- include('partials/head', { title: 'Editar Pessoa - 1°BIS(AMV)' })%>
+<body class="bg-gray-100 text-gray-800 font-sans">
+
+  <header class="bg-green-800 text-white shadow-lg">
+    <div class="container mx-auto flex justify-between items-center p-4">
+      <h1 class="text-xl font-bold">Editar Pessoa</h1>
+      <a href="/people" class="text-sm bg-green-600 px-3 py-1 rounded hover:bg-green-700 transition">Voltar</a>
+    </div>
+  </header>
+
+  <main class="container mx-auto p-6">
+    <section class="bg-white shadow-lg rounded-xl p-6">
+      <h2 class="text-xl font-bold mb-4">Editar Pessoa</h2>
+      <form method="POST" action="/people/edit/<%= person.id %>" class="grid gap-4 md:grid-cols-2">
+        <input type="text" name="cpf" value="<%= person.cpf %>" placeholder="CPF" required class="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600">
+        <input type="text" name="name" value="<%= person.name %>" placeholder="Nome" required class="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600">
+        <input type="text" name="entry_method" value="<%= person.entry_method %>" placeholder="M�todo de entrada" class="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600">
+        <input type="datetime-local" name="entry_time" value="<%= person.entry_time ? new Date(person.entry_time).toISOString().slice(0,16) : '' %>" class="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600">
+        <input type="datetime-local" name="exit_time" value="<%= person.exit_time ? new Date(person.exit_time).toISOString().slice(0,16) : '' %>" class="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600 md:col-span-2">
+        <button type="submit" class="bg-green-700 text-white font-semibold py-3 rounded-lg hover:bg-green-800 transition md:col-span-2">Atualizar</button>
+      </form>
+    </section>
+  </main>
+
+  <%- include('partials/footer') %>
+
+
+</body>
+</html>

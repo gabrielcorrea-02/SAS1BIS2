@@ -1,0 +1,48 @@
+<nav class="hidden md:block w-64 min-h-screen bg-white shadow-md p-5">
+  <ul class="space-y-4">
+
+    <!-- Visitantes -->
+    <li>
+      <a href="/guests" class="block p-3 rounded-lg hover:bg-green-100 hover:text-green-700 transition">
+        Visitantes
+      </a>
+    </li>
+
+    <!-- Corpo Permanente -->
+    <li>
+      <a href="/cp" class="block p-3 rounded-lg hover:bg-green-100 hover:text-green-700 transition">
+        Corpo Permanente
+      </a>
+    </li>
+
+    <!-- Veículos
+    <li>
+      <a href="/vehicles" class="block p-3 rounded-lg hover:bg-green-100 hover:text-green-700 transition">
+        Veículos
+      </a>
+    </li> -->
+
+    <!-- Admin-only items -->
+    <% if(user.role === 'admin'){ %>
+    <li>
+      <a href="/admin/users" class="block p-3 rounded-lg hover:bg-green-100 hover:text-green-700 transition">
+        Usuários
+      </a>
+    </li>
+
+    <li>
+      <a href="/admin/reports" class="block p-3 rounded-lg hover:bg-green-100 hover:text-green-700 transition">
+        Relatórios
+      </a>
+    </li>
+
+    <% } %>
+
+    <li>
+      <a href="/logout" class="block p-3 rounded-lg text-red-600 hover:bg-red-100 transition">
+        Sair
+      </a>
+    </li>
+
+  </ul>
+</nav>
