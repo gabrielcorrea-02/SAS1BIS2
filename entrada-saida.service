@@ -1,0 +1,14 @@
+[Unit]
+Description=Sistema de Controle de Entrada e Saída
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/node /home/sti/entrada-saida/server.js
+WorkingDirectory=/home/sti/entrada-saida
+Restart=always
+User=sti
+Environment=PATH=/usr/bin:/usr/local/bin
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,58 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_MODE: ${BUILD_MODE:-debug}
+    container_name: node_app
+
+    environment:
+      NODE_ENV: development
+
+      DB_HOST: db
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DB_NAME: ${POSTGRES_DB:-appdb}
+      DB_PORT: 5432
+
+    ports:
+      - "3000:3000"
+
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+    depends_on:
+      - db
+
+    command: >
+      sh -c "
+      echo 'Running in debug mode with nodemon';
+      npx nodemon --legacy-watch server.js
+      "
+
+  db:
+    image: postgres:13
+    container_name: postgres13
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-appdb}
+
+    ports:
+      - "5433:5432"
+
+    volumes:
+      - ./dbdata:/var/lib/postgresql/data
+      - ./db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  dbdata:
